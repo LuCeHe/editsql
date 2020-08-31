@@ -10,7 +10,8 @@
 GLOVE_PATH="data/glove.840B.300d.txt" # you need to change this
 LOGDIR="logs/logs_sparc_editsql"
 
-CUDA_VISIBLE_DEVICES=5 python3 run.py --raw_train_filename="data/sparc_data_removefrom/train.pkl" \
+CUDA_VISIBLE_DEVICES=5 python3 run.py
+--raw_train_filename="data/sparc_data_removefrom/train.pkl" \
           --raw_validation_filename="data/sparc_data_removefrom/dev.pkl" \
           --database_schema_filename="data/sparc_data_removefrom/tables.json" \
           --embedding_filename=$GLOVE_PATH \
@@ -40,4 +41,4 @@ CUDA_VISIBLE_DEVICES=5 python3 run.py --raw_train_filename="data/sparc_data_remo
 
 # 3. get evaluation result
 
-python3 postprocess_eval.py --dataset=sparc --split=dev --pred_file $LOGDIR/valid_use_predicted_queries_predictions.json --remove_from
+python3 postprocess_eval.py --dataset=sparc --split=dev --pred_file logs/logs_sparc_editsql/valid_use_predicted_queries_predictions.json --remove_from

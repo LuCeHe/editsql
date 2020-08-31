@@ -17,6 +17,7 @@ import numpy as np
 
 from data_util.atis_vocab import ATISVocabulary
 
+
 def get_token_indices(token, index_to_token):
     """ Maps from a gold token (string) to a list of indices.
 
@@ -41,6 +42,7 @@ def get_token_indices(token, index_to_token):
     else:
         return [index_to_token.index(UNK_TOK)]
 
+
 def flatten_utterances(utterances):
     """ Gets a flat sequence from a sequence of utterances.
 
@@ -59,6 +61,7 @@ def flatten_utterances(utterances):
 
     return sequence
 
+
 def encode_snippets_with_states(snippets, states):
     """ Encodes snippets by using previous query states instead.
 
@@ -68,62 +71,64 @@ def encode_snippets_with_states(snippets, states):
         TODO: should this by dy.Expression or vector values?
     """
     for snippet in snippets:
-        snippet.set_embedding(torch.cat([states[snippet.startpos],states[snippet.endpos]], dim=0))
+        snippet.set_embedding(torch.cat([states[snippet.startpos], states[snippet.endpos]], dim=0))
     return snippets
 
+
 def load_word_embeddings(input_vocabulary, output_vocabulary, output_vocabulary_schema, params):
-  print(output_vocabulary.inorder_tokens)
-  print()
+    print(output_vocabulary.inorder_tokens)
+    print()
 
-  def read_glove_embedding(embedding_filename, embedding_size):
-    glove_embeddings = {}
+    def read_glove_embedding(embedding_filename, embedding_size):
+        glove_embeddings = {}
 
-    with open(embedding_filename) as f:
-      cnt = 1
-      for line in f:
-        cnt += 1
-        if params.debug or not params.train:
-          if cnt == 1000:
-            print('Read 1000 word embeddings')
-            break
-        l_split = line.split()
-        word = " ".join(l_split[0:len(l_split) - embedding_size])
-        embedding = np.array([float(val) for val in l_split[-embedding_size:]])
-        glove_embeddings[word] = embedding
+        with open(embedding_filename, encoding="utf8") as f:
+            cnt = 1
+            for line in f:
+                cnt += 1
+                if params.debug or not params.train:
+                    if cnt == 1000:
+                        print('Read 1000 word embeddings')
+                        break
+                l_split = line.split()
+                word = " ".join(l_split[0:len(l_split) - embedding_size])
+                embedding = np.array([float(val) for val in l_split[-embedding_size:]])
+                glove_embeddings[word] = embedding
 
-    return glove_embeddings
+        return glove_embeddings
 
-  print('Loading Glove Embedding from', params.embedding_filename)
-  glove_embedding_size = 300
-  glove_embeddings = read_glove_embedding(params.embedding_filename, glove_embedding_size)
-  print('Done')
+    print('Loading Glove Embedding from', params.embedding_filename)
+    glove_embedding_size = 300
+    glove_embeddings = read_glove_embedding(params.embedding_filename, glove_embedding_size)
+    print('Done')
 
-  input_embedding_size = glove_embedding_size
+    input_embedding_size = glove_embedding_size
 
-  def create_word_embeddings(vocab):
-    vocabulary_embeddings = np.zeros((len(vocab), glove_embedding_size), dtype=np.float32)
-    vocabulary_tokens = vocab.inorder_tokens
+    def create_word_embeddings(vocab):
+        vocabulary_embeddings = np.zeros((len(vocab), glove_embedding_size), dtype=np.float32)
+        vocabulary_tokens = vocab.inorder_tokens
 
-    glove_oov = 0
-    para_oov = 0
-    for token in vocabulary_tokens:
-      token_id = vocab.token_to_id(token)
-      if token in glove_embeddings:
-        vocabulary_embeddings[token_id][:glove_embedding_size] = glove_embeddings[token]
-      else:
-        glove_oov += 1
+        glove_oov = 0
+        para_oov = 0
+        for token in vocabulary_tokens:
+            token_id = vocab.token_to_id(token)
+            if token in glove_embeddings:
+                vocabulary_embeddings[token_id][:glove_embedding_size] = glove_embeddings[token]
+            else:
+                glove_oov += 1
 
-    print('Glove OOV:', glove_oov, 'Para OOV', para_oov, 'Total', len(vocab))
+        print('Glove OOV:', glove_oov, 'Para OOV', para_oov, 'Total', len(vocab))
 
-    return vocabulary_embeddings
+        return vocabulary_embeddings
 
-  input_vocabulary_embeddings = create_word_embeddings(input_vocabulary)
-  output_vocabulary_embeddings = create_word_embeddings(output_vocabulary)
-  output_vocabulary_schema_embeddings = None
-  if output_vocabulary_schema:
-    output_vocabulary_schema_embeddings = create_word_embeddings(output_vocabulary_schema)
+    input_vocabulary_embeddings = create_word_embeddings(input_vocabulary)
+    output_vocabulary_embeddings = create_word_embeddings(output_vocabulary)
+    output_vocabulary_schema_embeddings = None
+    if output_vocabulary_schema:
+        output_vocabulary_schema_embeddings = create_word_embeddings(output_vocabulary_schema)
 
-  return input_vocabulary_embeddings, output_vocabulary_embeddings, output_vocabulary_schema_embeddings, input_embedding_size
+    return input_vocabulary_embeddings, output_vocabulary_embeddings, output_vocabulary_schema_embeddings, input_embedding_size
+
 
 class ATISModel(torch.nn.Module):
     """ Sequence-to-sequence model for predicting a SQL query given an utterance
@@ -146,7 +151,8 @@ class ATISModel(torch.nn.Module):
 
         if 'atis' not in params.data_directory:
             if params.use_bert:
-                input_vocabulary_embeddings, output_vocabulary_embeddings, output_vocabulary_schema_embeddings, input_embedding_size = load_word_embeddings(input_vocabulary, output_vocabulary, output_vocabulary_schema, params)
+                input_vocabulary_embeddings, output_vocabulary_embeddings, output_vocabulary_schema_embeddings, input_embedding_size = load_word_embeddings(
+                    input_vocabulary, output_vocabulary, output_vocabulary_schema, params)
 
                 # Create the output embeddings
                 self.output_embedder = Embedder(params.output_embedding_size,
@@ -157,7 +163,8 @@ class ATISModel(torch.nn.Module):
                                                 freeze=False)
                 self.column_name_token_embedder = None
             else:
-                input_vocabulary_embeddings, output_vocabulary_embeddings, output_vocabulary_schema_embeddings, input_embedding_size = load_word_embeddings(input_vocabulary, output_vocabulary, output_vocabulary_schema, params)
+                input_vocabulary_embeddings, output_vocabulary_embeddings, output_vocabulary_schema_embeddings, input_embedding_size = load_word_embeddings(
+                    input_vocabulary, output_vocabulary, output_vocabulary_schema, params)
 
                 params.input_embedding_size = input_embedding_size
                 self.params.input_embedding_size = input_embedding_size
@@ -179,11 +186,11 @@ class ATISModel(torch.nn.Module):
                                                 freeze=False)
 
                 self.column_name_token_embedder = Embedder(params.input_embedding_size,
-                                                name="schema-embedding",
-                                                initializer=output_vocabulary_schema_embeddings,
-                                                vocabulary=output_vocabulary_schema,
-                                                anonymizer=anonymizer,
-                                                freeze=params.freeze)
+                                                           name="schema-embedding",
+                                                           initializer=output_vocabulary_schema_embeddings,
+                                                           vocabulary=output_vocabulary_schema,
+                                                           anonymizer=anonymizer,
+                                                           freeze=params.freeze)
         else:
             # Create the input embeddings
             self.input_embedder = Embedder(params.input_embedding_size,
@@ -224,11 +231,12 @@ class ATISModel(torch.nn.Module):
 
         self.utterance_attention_key_size = attention_key_size
 
-
         # Create the discourse-level LSTM parameters
         if params.discourse_level_lstm:
-            self.discourse_lstms = torch_utils.create_multilayer_lstm_params(1, params.encoder_state_size, params.encoder_state_size / 2, "LSTM-t")
-            self.initial_discourse_state = torch_utils.add_params(tuple([params.encoder_state_size / 2]), "V-turn-state-0")
+            self.discourse_lstms = torch_utils.create_multilayer_lstm_params(1, params.encoder_state_size,
+                                                                             params.encoder_state_size / 2, "LSTM-t")
+            self.initial_discourse_state = torch_utils.add_params(tuple([params.encoder_state_size / 2]),
+                                                                  "V-turn-state-0")
 
         # Snippet encoder
         final_snippet_size = 0
@@ -244,14 +252,14 @@ class ATISModel(torch.nn.Module):
                     num_tokens=params.max_snippet_age_embedding)
                 final_snippet_size = params.encoder_state_size + params.snippet_age_embedding_size / 2
 
-
             self.snippet_encoder = Encoder(params.snippet_num_layers,
                                            params.output_embedding_size,
                                            snippet_encoding_size)
 
         # Previous query Encoder
         if params.use_previous_query:
-            self.query_encoder = Encoder(params.encoder_num_layers, params.output_embedding_size, params.encoder_state_size)
+            self.query_encoder = Encoder(params.encoder_num_layers, params.output_embedding_size,
+                                         params.encoder_state_size)
 
         self.final_snippet_size = final_snippet_size
         self.dropout = 0.
@@ -282,11 +290,13 @@ class ATISModel(torch.nn.Module):
 
             for snippet in snippets:
                 if input_schema:
-                    embedding = torch.cat([previous_outputs[snippet.startpos],previous_outputs[snippet.endpos-1]], dim=0)
+                    embedding = torch.cat([previous_outputs[snippet.startpos], previous_outputs[snippet.endpos - 1]],
+                                          dim=0)
                 else:
-                    embedding = torch.cat([previous_outputs[snippet.startpos],previous_outputs[snippet.endpos]], dim=0)
+                    embedding = torch.cat([previous_outputs[snippet.startpos], previous_outputs[snippet.endpos]], dim=0)
                 if self.params.snippet_age_embedding:
-                    embedding = torch.cat([embedding, self.snippet_age_embedder(min(snippet.age, self.params.max_snippet_age_embedding - 1))], dim=0)
+                    embedding = torch.cat([embedding, self.snippet_age_embedder(
+                        min(snippet.age, self.params.max_snippet_age_embedding - 1))], dim=0)
                 snippet.set_embedding(embedding)
 
         return snippets
@@ -298,11 +308,11 @@ class ATISModel(torch.nn.Module):
         for lstm in self.discourse_lstms:
             hidden_size = lstm.weight_hh.size()[1]
             if lstm.weight_hh.is_cuda:
-                h_0 = torch.cuda.FloatTensor(1,hidden_size).fill_(0)
-                c_0 = torch.cuda.FloatTensor(1,hidden_size).fill_(0)
+                h_0 = torch.cuda.FloatTensor(1, hidden_size).fill_(0)
+                c_0 = torch.cuda.FloatTensor(1, hidden_size).fill_(0)
             else:
-                h_0 = torch.zeros(1,hidden_size)
-                c_0 = torch.zeros(1,hidden_size)
+                h_0 = torch.zeros(1, hidden_size)
+                c_0 = torch.zeros(1, hidden_size)
             discourse_lstm_states.append((h_0, c_0))
 
         return discourse_state, discourse_lstm_states
@@ -314,7 +324,8 @@ class ATISModel(torch.nn.Module):
         for utterance in utterances:
             grouped_states.append(hidden_states[start_index:start_index + len(utterance)])
             start_index += len(utterance)
-        assert len(hidden_states) == sum([len(seq) for seq in grouped_states]) == sum([len(utterance) for utterance in utterances])
+        assert len(hidden_states) == sum([len(seq) for seq in grouped_states]) == sum(
+            [len(utterance) for utterance in utterances])
 
         new_states = []
         flat_sequence = []
@@ -387,4 +398,3 @@ class ATISModel(torch.nn.Module):
         """
         self.load_state_dict(torch.load(filename))
         print("Loaded model from file " + filename)
-

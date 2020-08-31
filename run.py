@@ -6,14 +6,14 @@ import sys
 import numpy as np
 import random
 
-from parse_args import interpret_args
+from editsql.parse_args import interpret_args
 
-import data_util
-from data_util import atis_data
-from model.schema_interaction_model import SchemaInteractionATISModel
-from logger import Logger
-from model.model import ATISModel
-from model_util import Metrics, evaluate_utterance_sample, evaluate_interaction_sample, \
+import editsql.data_util
+from editsql.data_util import atis_data
+from editsql.model.schema_interaction_model import SchemaInteractionATISModel
+from editsql.logger import Logger
+from editsql.model.model import ATISModel
+from editsql.model_util import Metrics, evaluate_utterance_sample, evaluate_interaction_sample, \
     train_epoch_with_utterances, train_epoch_with_interactions, evaluate_using_predicted_queries
 
 import torch
